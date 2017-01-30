@@ -8,9 +8,13 @@ describe('queue', function(){
     // this.retries(3);
 
     it('basics', function(done) {
-
         var call_order = [];
-        var delays = [40,20,60,20];
+        var orderFunctionMap = {
+            1: setTimeout,
+            2: async.nextTick,
+            3: setTimeout,
+            4: async.nextTick
+        };
 
 
         // worker1: --1-4
@@ -18,10 +22,11 @@ describe('queue', function(){
         // order of completion: 2,1,4,3
 
         var q = async.queue(function (task, callback) {
-            setTimeout(function () {
+            var asyncFunction = orderFunctionMap[task];
+            asyncFunction(function () {
                 call_order.push('process ' + task);
                 callback('error', 'arg');
-            }, delays.shift());
+            });
         }, 2);
 
         q.push(1, function (err, arg) {
